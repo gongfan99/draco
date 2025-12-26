@@ -8,12 +8,14 @@ jobs:
   build-draco-sdk:
     name: build-draco-sdk-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: checkout-source
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             cmake_generator: "Unix Makefiles"
             cmake_build_args: "-- -j2"
+            sdk_target: draco_static
             lib_name: libdraco.a
             package_commands: |
               mkdir -p sdk/lib sdk/include
@@ -23,15 +25,17 @@ jobs:
           - os: windows-latest
             cmake_generator: "Visual Studio 17 2022"
             cmake_build_args: "--config Release -- -m:2"
+            sdk_target: draco
             lib_name: draco.lib
             package_commands: |
-              mkdir sdk/lib sdk/include
-              copy _gh_sdk_build/Release/draco.lib sdk/lib/
-              xcopy /E /I src/draco sdk/include/draco/
-              copy _gh_sdk_build/draco/draco_features.h sdk/include/draco/
+              mkdir -p sdk/lib sdk/include
+              cp _gh_sdk_build/Release/draco.lib sdk/lib/
+              cp -r src/draco sdk/include/
+              cp _gh_sdk_build/draco/draco_features.h sdk/include/draco/
           - os: macos-latest
             cmake_generator: "Unix Makefiles"
             cmake_build_args: "-- -j2"
+            sdk_target: draco_static
             lib_name: libdraco.a
             package_commands: |
               mkdir -p sdk/lib sdk/include
@@ -39,12 +43,13 @@ jobs:
               cp -r src/draco sdk/include/
               cp _gh_sdk_build/draco/draco_features.h sdk/include/draco/
     steps:
-      - name: Clone Draco with Submodules
-        uses: actions/checkout@v4
+      - name: Download source code
+        uses: actions/download-artifact@v4
         with:
-          submodules: true
+          name: draco-source
 
       - name: Configure CMake for Draco SDK
+        shell: bash
         run: |
           mkdir _gh_sdk_build && cd _gh_sdk_build
           cmake .. -G "${{ matrix.cmake_generator }}" \
@@ -56,7 +61,7 @@ jobs:
       - name: Build Draco SDK (static library)
         run: |
           cd _gh_sdk_build
-          cmake --build . --target draco_static ${{ matrix.cmake_build_args }}
+          cmake --build . --target ${{ matrix.sdk_target }} ${{ matrix.cmake_build_args }}
 
       - name: Create SDK package
         run: ${{ matrix.package_commands }}
