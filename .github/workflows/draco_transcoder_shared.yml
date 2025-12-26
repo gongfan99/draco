@@ -1,0 +1,77 @@
+name: draco-transcoder-shared
+
+on:
+  workflow_dispatch:
+    # Manual trigger only
+
+jobs:
+  build-shared-lib:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            container: ubuntu:18.10
+            lib_name: libdraco_transcoder_shared.so
+            artifact_name: draco-transcoder-ubuntu-18.10
+            cmake_configure_command: |
+              apt-get update && apt-get install -y build-essential cmake git
+              mkdir _gh_build && cd _gh_build
+              cmake .. -G "Unix Makefiles" \
+                -DBUILD_SHARED_LIBS=ON \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DDRACO_TRANSCODER_SUPPORTED=ON \
+                -DDRACO_BUILD_EXECUTABLES=OFF
+            cmake_build_command: cmake --build . --target draco_transcoder_shared -- -j2
+          - os: windows-latest
+            lib_name: draco_transcoder_shared.dll
+            artifact_name: draco-transcoder-windows
+            cmake_configure_command: |
+              mkdir _gh_build && cd _gh_build
+              cmake .. -G "Visual Studio 17 2022" \
+                -DBUILD_SHARED_LIBS=ON \
+                -DCMAKE_CONFIGURATION_TYPES=Release \
+                -DDRACO_TRANSCODER_SUPPORTED=ON \
+                -DDRACO_BUILD_EXECUTABLES=OFF
+            cmake_build_command: cmake --build . --config Release --target draco_transcoder_shared -- -m:2
+          - os: macos-latest
+            lib_name: libdraco_transcoder_shared.dylib
+            artifact_name: draco-transcoder-macos
+            cmake_configure_command: |
+              mkdir _gh_build && cd _gh_build
+              cmake .. -G "Unix Makefiles" \
+                -DBUILD_SHARED_LIBS=ON \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DDRACO_TRANSCODER_SUPPORTED=ON \
+                -DDRACO_BUILD_EXECUTABLES=OFF
+            cmake_build_command: cmake --build . --target draco_transcoder_shared -- -j2
+
+    name: build-${{ matrix.artifact_name }}
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Clone Draco with Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Fix Ubuntu 18.10 repositories (if needed)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+          sed -i 's/security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+
+      - name: Configure CMake build
+        shell: bash
+        run: ${{ matrix.cmake_configure_command }}
+
+      - name: Build with CMake
+        shell: bash
+        run: ${{ matrix.cmake_build_command }}
+        working-directory: ./_gh_build
+
+      - name: Upload shared library
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: _gh_build/${{ matrix.lib_name }}

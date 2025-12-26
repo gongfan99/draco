@@ -1134,6 +1134,19 @@ else()
         INCLUDES ${draco_include_paths}
         LIB_DEPS ${draco_dependency})
 
+      # Shared library for Python ctypes binding
+      draco_add_library(
+        NAME draco_transcoder_shared
+        TYPE SHARED
+        SOURCES "${draco_src_root}/tools/draco_transcoder_c_api.cc"
+                "${draco_src_root}/tools/draco_transcoder_c_api.h"
+                "${draco_src_root}/tools/draco_transcoder_lib.cc"
+                "${draco_src_root}/tools/draco_transcoder_lib.h"
+                ${draco_io_sources}
+        DEFINES ${draco_defines}
+        INCLUDES ${draco_include_paths}
+        LIB_DEPS ${draco_dependency})
+
       if(DRACO_SIMPLIFIER_SUPPORTED)
         draco_add_executable(
           NAME draco_simplifier
