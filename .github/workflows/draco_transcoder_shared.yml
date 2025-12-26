@@ -5,7 +5,24 @@ on:
     # Manual trigger only
 
 jobs:
+  checkout-source:
+    name: checkout-source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Draco with Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Upload source code
+        uses: actions/upload-artifact@v4
+        with:
+          name: draco-source
+          path: .
+          retention-days: 1
+
   build-shared-lib:
+    needs: checkout-source
     strategy:
       matrix:
         include:
@@ -14,7 +31,7 @@ jobs:
             lib_name: libdraco_transcoder_shared.so
             artifact_name: draco-transcoder-ubuntu-18.10
             cmake_configure_command: |
-              apt-get update && apt-get install -y build-essential cmake git
+              apt-get update && apt-get install -y build-essential cmake
               mkdir _gh_build && cd _gh_build
               cmake .. -G "Unix Makefiles" \
                 -DBUILD_SHARED_LIBS=ON \
@@ -50,10 +67,10 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - name: Clone Draco with Submodules
-        uses: actions/checkout@v4
+      - name: Download source code
+        uses: actions/download-artifact@v4
         with:
-          submodules: true
+          name: draco-source
 
       - name: Fix Ubuntu 18.10 repositories (if needed)
         if: matrix.os == 'ubuntu-latest'
