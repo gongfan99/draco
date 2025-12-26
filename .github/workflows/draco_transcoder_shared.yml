@@ -5,10 +5,32 @@ on:
     # Manual trigger only
 
 jobs:
+  check-sdk-cache:
+    name: check-sdk-cache-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    outputs:
+      cache-hit: ${{ steps.cache-sdk.outputs.cache-hit }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+    steps:
+      - name: Check SDK Cache
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: sdk/
+          key: draco-sdk-${{ matrix.os }}-v1
+          restore-keys: |
+            draco-sdk-${{ matrix.os }}-
+
   build-draco-sdk:
     name: build-draco-sdk-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: checkout-source
+    needs: [checkout-source, check-sdk-cache]
+    if: needs.check-sdk-cache.outputs.cache-hit != 'true'
     strategy:
       matrix:
         include:
@@ -105,6 +127,10 @@ jobs:
 
   build-shared-lib:
     needs: [checkout-source, build-draco-sdk]
+    if: |
+      always() &&
+      needs.checkout-source.result == 'success' &&
+      (needs.build-draco-sdk.result == 'success' || needs.build-draco-sdk.result == 'skipped')
     strategy:
       matrix:
         include:
