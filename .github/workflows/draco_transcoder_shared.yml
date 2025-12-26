@@ -5,6 +5,70 @@ on:
     # Manual trigger only
 
 jobs:
+  build-draco-sdk:
+    name: build-draco-sdk-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cmake_generator: "Unix Makefiles"
+            cmake_build_args: "-- -j2"
+            lib_name: libdraco.a
+            package_commands: |
+              mkdir -p sdk/lib sdk/include
+              cp _gh_sdk_build/libdraco.a sdk/lib/
+              cp -r src/draco sdk/include/
+              cp _gh_sdk_build/draco/draco_features.h sdk/include/draco/
+          - os: windows-latest
+            cmake_generator: "Visual Studio 17 2022"
+            cmake_build_args: "--config Release -- -m:2"
+            lib_name: draco.lib
+            package_commands: |
+              mkdir sdk/lib sdk/include
+              copy _gh_sdk_build/Release/draco.lib sdk/lib/
+              xcopy /E /I src/draco sdk/include/draco/
+              copy _gh_sdk_build/draco/draco_features.h sdk/include/draco/
+          - os: macos-latest
+            cmake_generator: "Unix Makefiles"
+            cmake_build_args: "-- -j2"
+            lib_name: libdraco.a
+            package_commands: |
+              mkdir -p sdk/lib sdk/include
+              cp _gh_sdk_build/libdraco.a sdk/lib/
+              cp -r src/draco sdk/include/
+              cp _gh_sdk_build/draco/draco_features.h sdk/include/draco/
+    steps:
+      - name: Clone Draco with Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Configure CMake for Draco SDK
+        run: |
+          mkdir _gh_sdk_build && cd _gh_sdk_build
+          cmake .. -G "${{ matrix.cmake_generator }}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DDRACO_TRANSCODER_SUPPORTED=ON \
+            -DDRACO_BUILD_EXECUTABLES=OFF \
+            -DBUILD_SHARED_LIBS=OFF
+
+      - name: Build Draco SDK (static library)
+        run: |
+          cd _gh_sdk_build
+          cmake --build . --target draco_static ${{ matrix.cmake_build_args }}
+
+      - name: Create SDK package
+        run: ${{ matrix.package_commands }}
+        shell: bash
+
+      - name: Upload Draco SDK
+        uses: actions/upload-artifact@v4
+        with:
+          name: draco-sdk-${{ matrix.os }}
+          path: sdk/
+          retention-days: 7
+
   checkout-source:
     name: checkout-source
     runs-on: ubuntu-latest
@@ -22,7 +86,7 @@ jobs:
           retention-days: 1
 
   build-shared-lib:
-    needs: checkout-source
+    needs: [checkout-source, build-draco-sdk]
     strategy:
       matrix:
         include:
@@ -33,33 +97,66 @@ jobs:
             cmake_configure_command: |
               apt-get update && apt-get install -y build-essential cmake
               mkdir _gh_build && cd _gh_build
-              cmake .. -G "Unix Makefiles" \
-                -DBUILD_SHARED_LIBS=ON \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DDRACO_TRANSCODER_SUPPORTED=ON \
-                -DDRACO_BUILD_EXECUTABLES=OFF
+              if [ -d "../sdk" ]; then
+                echo "Using pre-built Draco SDK"
+                cmake .. -G "Unix Makefiles" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DDRACO_TRANSCODER_SUPPORTED=ON \
+                  -DDRACO_BUILD_EXECUTABLES=OFF \
+                  -DDRACO_SDK_PATH=../sdk
+              else
+                echo "Building with full Draco library"
+                cmake .. -G "Unix Makefiles" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DDRACO_TRANSCODER_SUPPORTED=ON \
+                  -DDRACO_BUILD_EXECUTABLES=OFF
+              fi
             cmake_build_command: cmake --build . --target draco_transcoder_shared -- -j2
           - os: windows-latest
             lib_name: Release/draco_transcoder_shared.dll
             artifact_name: draco-transcoder-windows
             cmake_configure_command: |
               mkdir _gh_build && cd _gh_build
-              cmake .. -G "Visual Studio 17 2022" \
-                -DBUILD_SHARED_LIBS=ON \
-                -DCMAKE_CONFIGURATION_TYPES=Release \
-                -DDRACO_TRANSCODER_SUPPORTED=ON \
-                -DDRACO_BUILD_EXECUTABLES=OFF
+              if (Test-Path "../sdk") {
+                Write-Host "Using pre-built Draco SDK"
+                cmake .. -G "Visual Studio 17 2022" `
+                  -DBUILD_SHARED_LIBS=ON `
+                  -DCMAKE_CONFIGURATION_TYPES=Release `
+                  -DDRACO_TRANSCODER_SUPPORTED=ON `
+                  -DDRACO_BUILD_EXECUTABLES=OFF `
+                  -DDRACO_SDK_PATH=../sdk
+              } else {
+                Write-Host "Building with full Draco library"
+                cmake .. -G "Visual Studio 17 2022" `
+                  -DBUILD_SHARED_LIBS=ON `
+                  -DCMAKE_CONFIGURATION_TYPES=Release `
+                  -DDRACO_TRANSCODER_SUPPORTED=ON `
+                  -DDRACO_BUILD_EXECUTABLES=OFF
+              }
             cmake_build_command: cmake --build . --config Release --target draco_transcoder_shared -- -m:2
           - os: macos-latest
             lib_name: libdraco_transcoder_shared.dylib
             artifact_name: draco-transcoder-macos
             cmake_configure_command: |
               mkdir _gh_build && cd _gh_build
-              cmake .. -G "Unix Makefiles" \
-                -DBUILD_SHARED_LIBS=ON \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DDRACO_TRANSCODER_SUPPORTED=ON \
-                -DDRACO_BUILD_EXECUTABLES=OFF
+              if [ -d "../sdk" ]; then
+                echo "Using pre-built Draco SDK"
+                cmake .. -G "Unix Makefiles" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DDRACO_TRANSCODER_SUPPORTED=ON \
+                  -DDRACO_BUILD_EXECUTABLES=OFF \
+                  -DDRACO_SDK_PATH=../sdk
+              else
+                echo "Building with full Draco library"
+                cmake .. -G "Unix Makefiles" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DDRACO_TRANSCODER_SUPPORTED=ON \
+                  -DDRACO_BUILD_EXECUTABLES=OFF
+              fi
             cmake_build_command: cmake --build . --target draco_transcoder_shared -- -j2
 
     name: build-${{ matrix.artifact_name }}
@@ -67,6 +164,12 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Download Draco SDK
+        uses: actions/download-artifact@v4
+        with:
+          name: draco-sdk-${{ matrix.os }}
+          path: sdk/
+
       - name: Download source code
         uses: actions/download-artifact@v4
         with:

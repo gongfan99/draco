@@ -37,6 +37,22 @@ typedef struct {
 int draco_transcode_gltf(const char *input_filename,
                          const char *output_filename, DracoOptions *options);
 
+// Transcodes glTF data from a memory buffer to Draco compressed glTF.
+// Returns a pointer to the output buffer on success, NULL on error.
+// The caller must free the returned buffer using draco_free_buffer().
+void *draco_transcode_gltf_from_buffer(const void *input_data,
+                                       size_t input_size, DracoOptions *options,
+                                       size_t *output_size);
+
+// Decompresses Draco compressed glTF data to uncompressed glTF.
+// Returns a pointer to the output buffer on success, NULL on error.
+// The caller must free the returned buffer using draco_free_buffer().
+void *draco_decompress_gltf_to_buffer(const void *input_data, size_t input_size,
+                                      size_t *output_size);
+
+// Frees a buffer allocated by the C API functions.
+void draco_free_buffer(void *buffer);
+
 #ifdef __cplusplus
 }
 #endif

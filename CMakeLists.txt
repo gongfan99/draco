@@ -1008,17 +1008,43 @@ else()
 
   # Shared library for Python ctypes binding (always available when transcoder is supported)
   if(DRACO_TRANSCODER_SUPPORTED)
-    draco_add_library(
-      NAME draco_transcoder_shared
-      TYPE SHARED
-      SOURCES "${draco_src_root}/tools/draco_transcoder_c_api.cc"
-              "${draco_src_root}/tools/draco_transcoder_c_api.h"
-              "${draco_src_root}/tools/draco_transcoder_lib.cc"
-              "${draco_src_root}/tools/draco_transcoder_lib.h"
-              ${draco_io_sources}
-      DEFINES ${draco_defines}
-      INCLUDES ${draco_include_paths}
-      LIB_DEPS ${draco_dependency})
+    # Check if we should use a pre-built Draco SDK
+    if(DEFINED DRACO_SDK_PATH AND EXISTS "${DRACO_SDK_PATH}")
+      message(STATUS "Using pre-built Draco SDK from: ${DRACO_SDK_PATH}")
+
+      # Find the SDK library
+      if(MSVC)
+        find_library(DRACO_SDK_LIBRARY NAMES draco.lib PATHS "${DRACO_SDK_PATH}/lib" REQUIRED)
+      else()
+        find_library(DRACO_SDK_LIBRARY NAMES draco libdraco PATHS "${DRACO_SDK_PATH}/lib" REQUIRED)
+      endif()
+
+      # Add SDK include directory
+      list(APPEND draco_include_paths "${DRACO_SDK_PATH}/include")
+
+      draco_add_library(
+        NAME draco_transcoder_shared
+        TYPE SHARED
+        SOURCES "${draco_src_root}/tools/draco_transcoder_c_api.cc"
+                "${draco_src_root}/tools/draco_transcoder_c_api.h"
+        DEFINES ${draco_defines}
+        INCLUDES ${draco_include_paths}
+        LIB_DEPS ${DRACO_SDK_LIBRARY})
+    else()
+      message(STATUS "Building Draco transcoder with full Draco library")
+
+      draco_add_library(
+        NAME draco_transcoder_shared
+        TYPE SHARED
+        SOURCES "${draco_src_root}/tools/draco_transcoder_c_api.cc"
+                "${draco_src_root}/tools/draco_transcoder_c_api.h"
+                "${draco_src_root}/tools/draco_transcoder_lib.cc"
+                "${draco_src_root}/tools/draco_transcoder_lib.h"
+                ${draco_io_sources}
+        DEFINES ${draco_defines}
+        INCLUDES ${draco_include_paths}
+        LIB_DEPS ${draco_dependency})
+    endif()
   endif()
 
   # Library targets that consume the object collections.
