@@ -217,13 +217,6 @@ jobs:
           restore-keys: |
             draco-sdk-${{ matrix.os }}-
 
-      - name: Download Draco SDK (fallback)
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: draco-sdk-${{ matrix.os }}
-          path: sdk/
-
       - name: Download source code
         uses: actions/download-artifact@v4
         with:
