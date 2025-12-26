@@ -165,12 +165,13 @@ jobs:
               mkdir _gh_build && cd _gh_build
               if [ -d "$GITHUB_WORKSPACE/sdk" ]; then
                 echo "Using pre-built Draco SDK"
+                SDK_PATH_FIXED=$(echo "$GITHUB_WORKSPACE/sdk" | sed 's/\\/\//g')
                 cmake .. -G "Visual Studio 17 2022" \
                   -DBUILD_SHARED_LIBS=ON \
                   -DCMAKE_CONFIGURATION_TYPES=Release \
                   -DDRACO_TRANSCODER_SUPPORTED=ON \
                   -DDRACO_BUILD_EXECUTABLES=OFF \
-                  -DDRACO_SDK_PATH="$GITHUB_WORKSPACE/sdk"
+                  -DDRACO_SDK_PATH="$SDK_PATH_FIXED"
               else
                 echo "Building with full Draco library"
                 cmake .. -G "Visual Studio 17 2022" \
