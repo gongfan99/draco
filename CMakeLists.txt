@@ -1014,9 +1014,9 @@ else()
 
       # Find the SDK library
       if(MSVC)
-        find_library(DRACO_SDK_LIBRARY NAMES draco.lib PATHS "${DRACO_SDK_PATH}/lib" REQUIRED)
+        find_library(DRACO_SDK_LIBRARY NAMES draco.lib PATHS "${DRACO_SDK_PATH}/lib" NO_DEFAULT_PATH REQUIRED)
       else()
-        find_library(DRACO_SDK_LIBRARY NAMES draco libdraco PATHS "${DRACO_SDK_PATH}/lib" REQUIRED)
+        find_library(DRACO_SDK_LIBRARY NAMES draco libdraco PATHS "${DRACO_SDK_PATH}/lib" NO_DEFAULT_PATH REQUIRED)
       endif()
 
       # Add SDK include directory

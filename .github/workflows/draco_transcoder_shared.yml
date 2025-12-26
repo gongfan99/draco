@@ -102,14 +102,14 @@ jobs:
             cmake_configure_command: |
               apt-get update && apt-get install -y build-essential cmake
               mkdir _gh_build && cd _gh_build
-              if [ -d "../sdk" ]; then
+              if [ -d "$GITHUB_WORKSPACE/sdk" ]; then
                 echo "Using pre-built Draco SDK"
                 cmake .. -G "Unix Makefiles" \
                   -DBUILD_SHARED_LIBS=ON \
                   -DCMAKE_BUILD_TYPE=Release \
                   -DDRACO_TRANSCODER_SUPPORTED=ON \
                   -DDRACO_BUILD_EXECUTABLES=OFF \
-                  -DDRACO_SDK_PATH=../sdk
+                  -DDRACO_SDK_PATH="$GITHUB_WORKSPACE/sdk"
               else
                 echo "Building with full Draco library"
                 cmake .. -G "Unix Makefiles" \
@@ -124,36 +124,36 @@ jobs:
             artifact_name: draco-transcoder-windows
             cmake_configure_command: |
               mkdir _gh_build && cd _gh_build
-              if (Test-Path "../sdk") {
-                Write-Host "Using pre-built Draco SDK"
-                cmake .. -G "Visual Studio 17 2022" `
-                  -DBUILD_SHARED_LIBS=ON `
-                  -DCMAKE_CONFIGURATION_TYPES=Release `
-                  -DDRACO_TRANSCODER_SUPPORTED=ON `
-                  -DDRACO_BUILD_EXECUTABLES=OFF `
-                  -DDRACO_SDK_PATH=../sdk
-              } else {
-                Write-Host "Building with full Draco library"
-                cmake .. -G "Visual Studio 17 2022" `
-                  -DBUILD_SHARED_LIBS=ON `
-                  -DCMAKE_CONFIGURATION_TYPES=Release `
-                  -DDRACO_TRANSCODER_SUPPORTED=ON `
+              if [ -d "$GITHUB_WORKSPACE/sdk" ]; then
+                echo "Using pre-built Draco SDK"
+                cmake .. -G "Visual Studio 17 2022" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DCMAKE_CONFIGURATION_TYPES=Release \
+                  -DDRACO_TRANSCODER_SUPPORTED=ON \
+                  -DDRACO_BUILD_EXECUTABLES=OFF \
+                  -DDRACO_SDK_PATH="$GITHUB_WORKSPACE/sdk"
+              else
+                echo "Building with full Draco library"
+                cmake .. -G "Visual Studio 17 2022" \
+                  -DBUILD_SHARED_LIBS=ON \
+                  -DCMAKE_CONFIGURATION_TYPES=Release \
+                  -DDRACO_TRANSCODER_SUPPORTED=ON \
                   -DDRACO_BUILD_EXECUTABLES=OFF
-              }
+              fi
             cmake_build_command: cmake --build . --config Release --target draco_transcoder_shared
           - os: macos-latest
             lib_name: libdraco_transcoder_shared.dylib
             artifact_name: draco-transcoder-macos
             cmake_configure_command: |
               mkdir _gh_build && cd _gh_build
-              if [ -d "../sdk" ]; then
+              if [ -d "$GITHUB_WORKSPACE/sdk" ]; then
                 echo "Using pre-built Draco SDK"
                 cmake .. -G "Unix Makefiles" \
                   -DBUILD_SHARED_LIBS=ON \
                   -DCMAKE_BUILD_TYPE=Release \
                   -DDRACO_TRANSCODER_SUPPORTED=ON \
                   -DDRACO_BUILD_EXECUTABLES=OFF \
-                  -DDRACO_SDK_PATH=../sdk
+                  -DDRACO_SDK_PATH="$GITHUB_WORKSPACE/sdk"
               else
                 echo "Building with full Draco library"
                 cmake .. -G "Unix Makefiles" \
