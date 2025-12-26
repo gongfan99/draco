@@ -24,7 +24,7 @@ jobs:
               cp _gh_sdk_build/draco/draco_features.h sdk/include/draco/
           - os: windows-latest
             cmake_generator: "Visual Studio 17 2022"
-            cmake_build_args: "--config Release -- -m:2"
+            cmake_build_args: "--config Release"
             sdk_target: draco
             lib_name: draco.lib
             package_commands: |
@@ -140,7 +140,7 @@ jobs:
                   -DDRACO_TRANSCODER_SUPPORTED=ON `
                   -DDRACO_BUILD_EXECUTABLES=OFF
               }
-            cmake_build_command: cmake --build . --config Release --target draco_transcoder_shared -- -m:2
+            cmake_build_command: cmake --build . --config Release --target draco_transcoder_shared
           - os: macos-latest
             lib_name: libdraco_transcoder_shared.dylib
             artifact_name: draco-transcoder-macos
