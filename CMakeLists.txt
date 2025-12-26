@@ -1027,6 +1027,8 @@ else()
         TYPE SHARED
         SOURCES "${draco_src_root}/tools/draco_transcoder_c_api.cc"
                 "${draco_src_root}/tools/draco_transcoder_c_api.h"
+                "${draco_src_root}/tools/draco_transcoder_lib.cc"
+                "${draco_src_root}/tools/draco_transcoder_lib.h"
         DEFINES ${draco_defines}
         INCLUDES ${draco_include_paths}
         LIB_DEPS ${DRACO_SDK_LIBRARY})
