@@ -55,7 +55,7 @@ int draco_transcode_gltf(const char *input_filename,
   }
 
   // Create and run transcoder
-  const draco::StatusOr<std::unique_ptr<draco::DracoTranscoder>> dt_result =
+  draco::StatusOr<std::unique_ptr<draco::DracoTranscoder>> dt_result =
       draco::DracoTranscoder::Create(transcode_options);
   if (!dt_result.ok()) {
     return -3;  // Failed to create transcoder
