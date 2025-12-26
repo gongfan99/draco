@@ -40,7 +40,7 @@ jobs:
                 -DDRACO_BUILD_EXECUTABLES=OFF
             cmake_build_command: cmake --build . --target draco_transcoder_shared -- -j2
           - os: windows-latest
-            lib_name: draco_transcoder_shared.dll
+            lib_name: Release/draco_transcoder_shared.dll
             artifact_name: draco-transcoder-windows
             cmake_configure_command: |
               mkdir _gh_build && cd _gh_build
