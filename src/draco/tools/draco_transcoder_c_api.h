@@ -15,6 +15,8 @@
 #ifndef DRACO_TOOLS_DRACO_TRANSCODER_C_API_H_
 #define DRACO_TOOLS_DRACO_TRANSCODER_C_API_H_
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

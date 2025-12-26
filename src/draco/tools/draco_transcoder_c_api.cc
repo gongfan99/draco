@@ -21,6 +21,7 @@
 #include "draco/core/status.h"
 #include "draco/io/gltf_decoder.h"
 #include "draco/io/gltf_encoder.h"
+#include "draco/scene/scene_utils.h"
 #include "draco/tools/draco_transcoder_lib.h"
 
 extern "C" {

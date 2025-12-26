@@ -48,7 +48,17 @@ jobs:
         with:
           name: draco-source
 
+      - name: Cache Draco SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: sdk/
+          key: draco-sdk-${{ matrix.os }}-v1
+          restore-keys: |
+            draco-sdk-${{ matrix.os }}-
+
       - name: Configure CMake for Draco SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir _gh_sdk_build && cd _gh_sdk_build
@@ -59,15 +69,18 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF
 
       - name: Build Draco SDK (static library)
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           cd _gh_sdk_build
           cmake --build . --target ${{ matrix.sdk_target }} ${{ matrix.cmake_build_args }}
 
       - name: Create SDK package
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: ${{ matrix.package_commands }}
         shell: bash
 
-      - name: Upload Draco SDK
+      - name: Upload SDK as artifact (fallback)
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: draco-sdk-${{ matrix.os }}
@@ -169,7 +182,17 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - name: Download Draco SDK
+      - name: Cache Draco SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: sdk/
+          key: draco-sdk-${{ matrix.os }}-v1
+          restore-keys: |
+            draco-sdk-${{ matrix.os }}-
+
+      - name: Download Draco SDK (fallback)
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         uses: actions/download-artifact@v4
         with:
           name: draco-sdk-${{ matrix.os }}
